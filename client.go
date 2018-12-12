@@ -152,6 +152,10 @@ type Config struct {
 
 	// For testing convenience.
 	stubResponses map[string]stubResponse
+
+	// MaxRetries is number of retries. If server response not available (421) error
+	// we try resend request
+	MaxRetries int
 }
 
 // Client maintains a connection pool to the FTP server(s), so you typically only
@@ -366,6 +370,7 @@ func (c *Client) openConn(idx int, host string) (pconn *persistentConn, err erro
 		currentType:      "A",
 		host:             host,
 		epsvNotSupported: c.config.DisableEPSV,
+		maxRetries:       c.config.MaxRetries,
 	}
 
 	var conn net.Conn

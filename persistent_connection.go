@@ -67,6 +67,8 @@ type persistentConn struct {
 	currentType string
 
 	host string
+
+	maxRetries int
 }
 
 func (pconn *persistentConn) SendCommand(f string, args ...interface{}) (int, string, error) {
@@ -164,6 +166,18 @@ func (pconn *persistentConn) sendCommand(f string, args ...interface{}) (int, st
 
 	pconn.debug("got %d-%s", code, msg)
 
+	if code == replyServiceNotAvailable {
+		var retriesCount = pconn.maxRetries
+		for code == replyServiceNotAvailable && retriesCount != 0 {
+			pconn.debug("retry command: %s err_code=%v err=%s", "EPSV", code, msg)
+			code, msg, err = pconn.sendCommand("EPSV")
+			if err != nil {
+				break
+			}
+			retriesCount--
+			time.Sleep(1 * time.Second)
+		}
+	}
 	return code, msg, err
 }
 
@@ -279,6 +293,7 @@ func (pconn *persistentConn) requestPassive() (string, error) {
 	}
 
 	if code != replyEnteringExtendedPassiveMode {
+
 		pconn.debug("server doesn't support EPSV: %d-%s", code, msg)
 		pconn.epsvNotSupported = true
 		goto PASV
