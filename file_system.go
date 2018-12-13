@@ -19,7 +19,21 @@ import (
 const timeFormat = "20060102150405"
 
 // Delete deletes the file "path".
-func (c *Client) Delete(path string) error {
+func (c *Client) Delete(path string) (err error) {
+	var retries = c.config.MaxRetries
+	for {
+		err = c.delete(path)
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) delete(path string) error {
 	pconn, err := c.getIdleConn()
 	if err != nil {
 		return err
@@ -31,7 +45,21 @@ func (c *Client) Delete(path string) error {
 }
 
 // Rename renames file "from" to "to".
-func (c *Client) Rename(from, to string) error {
+func (c *Client) Rename(from, to string) (err error) {
+	var retries = c.config.MaxRetries
+	for {
+		err = c.rename(from, to)
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) rename(from, to string) error {
 	pconn, err := c.getIdleConn()
 	if err != nil {
 		return err
@@ -49,7 +77,21 @@ func (c *Client) Rename(from, to string) error {
 
 // Mkdir creates directory "path". The returned string is how the client
 // should refer to the created directory.
-func (c *Client) Mkdir(path string) (string, error) {
+func (c *Client) Mkdir(path string) (res string, err error) {
+	var retries = c.config.MaxRetries
+	for {
+		res, err = c.mkdir(path)
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) mkdir(path string) (string, error) {
 	pconn, err := c.getIdleConn()
 	if err != nil {
 		return "", err
@@ -75,7 +117,21 @@ func (c *Client) Mkdir(path string) (string, error) {
 }
 
 // Rmdir removes directory "path".
-func (c *Client) Rmdir(path string) error {
+func (c *Client) Rmdir(path string) (err error) {
+	var retries = c.config.MaxRetries
+	for {
+		err = c.rmdir(path)
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) rmdir(path string) error {
 	pconn, err := c.getIdleConn()
 	if err != nil {
 		return err
@@ -87,7 +143,21 @@ func (c *Client) Rmdir(path string) error {
 }
 
 // Getwd returns the current working directory.
-func (c *Client) Getwd() (string, error) {
+func (c *Client) Getwd() (res string, err error) {
+	var retries = c.config.MaxRetries
+	for {
+		res, err = c.getwd()
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) getwd() (string, error) {
 	pconn, err := c.getIdleConn()
 	if err != nil {
 		return "", err
@@ -124,7 +194,21 @@ func commandNotSupporterdError(err error) bool {
 // the server supports. If the server does not support "MLSD", "LIST" will
 // be used. You may have to set ServerLocation in your config to get (more)
 // accurate ModTimes in this case.
-func (c *Client) ReadDir(path string) ([]os.FileInfo, error) {
+func (c *Client) ReadDir(path string) (res []os.FileInfo, err error) {
+	var retries = c.config.MaxRetries
+	for {
+		res, err = c.readDir(path)
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) readDir(path string) ([]os.FileInfo, error) {
 	entries, err := c.dataStringList("MLSD %s", path)
 
 	parser := parseMLST
@@ -166,7 +250,21 @@ func (c *Client) ReadDir(path string) ([]os.FileInfo, error) {
 // support "MLST", "LIST" will be attempted, but "LIST" will not work if path
 // is a directory. You may have to set ServerLocation in your config to get
 // (more) accurate ModTimes when using "LIST".
-func (c *Client) Stat(path string) (os.FileInfo, error) {
+func (c *Client) Stat(path string) (res os.FileInfo, err error) {
+	var retries = c.config.MaxRetries
+	for {
+		res, err = c.stat(path)
+		if err != nil && retries <= 0 {
+			return
+		} else if err == nil {
+			return
+		}
+		retries--
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Client) stat(path string) (os.FileInfo, error) {
 	lines, err := c.controlStringList("MLST %s", path)
 	if err != nil {
 		if commandNotSupporterdError(err) {
